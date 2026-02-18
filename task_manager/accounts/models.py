@@ -24,5 +24,7 @@ class CustomUser(AbstractUser):
         blank=True
     )
 
+    username = models.CharField(max_length=40,unique=True)
+
     def __str__(self):
-        return self.email
+        return self.username
