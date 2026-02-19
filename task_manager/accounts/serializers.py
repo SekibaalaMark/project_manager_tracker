@@ -82,3 +82,44 @@ class LoginSerializer(serializers.Serializer):
             "refresh": str(refresh),
             "access": str(refresh.access_token),
         }
+
+
+
+
+
+import random
+import string
+class CreateOrganizationUserSerializer(serializers.Serializer):
+    email = serializers.EmailField()
+    username = serializers.CharField()
+    role = serializers.ChoiceField(choices=["MANAGER", "MEMBER"])
+
+    def validate(self, data):
+        request = self.context["request"]
+
+        if request.user.role != "OWNER":
+            raise serializers.ValidationError("Only OWNER can create users.")
+
+        return data
+
+    def create(self, validated_data):
+        request = self.context["request"]
+
+        # Generate temporary password
+        temp_password = ''.join(random.choices(
+            string.ascii_letters + string.digits, k=8
+        ))
+
+        user = User.objects.create_user(
+            username=validated_data["username"],
+            email=validated_data["email"],
+            password=temp_password,
+            organization=request.user.organization,
+            role=validated_data["role"],
+            must_change_password=True
+        )
+
+        # In real production → send email
+        print(f"Temporary password for {user.email}: {temp_password}")
+
+        return user
