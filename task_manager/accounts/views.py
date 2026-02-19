@@ -27,14 +27,10 @@ class LoginView(APIView):
                 "message": "Login successful",
                 "access": data["access"],
                 "refresh": data["refresh"],
-                "user": {
-                    "id": user.id,
-                    "username": user.username,
-                    "email": user.email,
-                    "role": user.role,
-                    "organization": user.organization.name if user.organization else None
+                "role": user.role,
+                "organization": user.organization.name if user.organization else None
                 }
-            }, status=status.HTTP_200_OK)
+            , status=status.HTTP_200_OK)
 
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
