@@ -28,9 +28,35 @@ class LoginView(APIView):
                 "access": data["access"],
                 "refresh": data["refresh"],
                 "role": user.role,
+                "must_change_password": user.must_change_password,
                 "organization": user.organization.name if user.organization else None
                 }
             , status=status.HTTP_200_OK)
 
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
+
+
+
+from rest_framework.permissions import IsAuthenticated
+from .serializers import CreateOrganizationUserSerializer
+
+class CreateOrganizationUserView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request):
+        serializer = CreateOrganizationUserSerializer(
+            data=request.data,
+            context={"request": request}
+        )
+
+        if serializer.is_valid():
+            user = serializer.save()
+            return Response({
+                "message": "User created successfully",
+                "username": user.username,
+                "email": user.email,
+                "role": user.role
+            }, status=201)
+
+        return Response(serializer.errors, status=400)
