@@ -4,6 +4,7 @@ from organizations.models import Organization
 from django.utils.text import slugify
 from django.db import transaction
 import random
+from .utils import * 
 
 User = get_user_model()
 from .utils import send_temporary_password_email
@@ -41,15 +42,17 @@ class RegisterSerializer(serializers.Serializer):
                     email=validated_data["email"],
                     password=validated_data["password"],
                     organization=org,
-                    role="OWNER"
+                    role="OWNER",
+                    is_active=False,   # IMPORTANT
                 )
+                
         else:
             user = User.objects.create_user(
                 username=validated_data["username"],
                 email=validated_data["email"],
                 password=validated_data["password"]
             )
-
+        send_verification_email(self.context["request"], user)
         return user
     
 
@@ -75,6 +78,8 @@ class LoginSerializer(serializers.Serializer):
 
         if not user.is_active:
             raise serializers.ValidationError("User account is disabled.")
+        if user.role =="OWNER" and not user.email_verified:
+            raise serializers.ValidationError("Please verify your email first.")
 
         # Generate JWT tokens manually
         refresh = RefreshToken.for_user(user)
