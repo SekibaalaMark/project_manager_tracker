@@ -5,7 +5,7 @@ from .serializers import *
 
 class RegisterView(APIView):
     def post(self, request):
-        serializer = RegisterSerializer(data=request.data)
+        serializer = RegisterSerializer(data=request.data,context={"request": request})
         if serializer.is_valid():
             user = serializer.save()
             return Response({"message": "User registered successfully"}, status=status.HTTP_201_CREATED)
@@ -78,3 +78,28 @@ class SetNewPasswordView(APIView):
             return Response({"message": "Password updated successfully"})
         
         return Response(serializer.errors, status=400)
+    
+
+
+
+from django.utils.http import urlsafe_base64_decode
+from django.utils.encoding import force_str
+from .tokens import *
+
+
+class VerifyEmailView(APIView):
+    def get(self, request, uidb64, token):
+        try:
+            uid = force_str(urlsafe_base64_decode(uidb64))
+            user = User.objects.get(pk=uid)
+        except (TypeError, ValueError, OverflowError, User.DoesNotExist):
+            return Response({"error": "Invalid link"}, status=400)
+
+        if email_verification_token.check_token(user, token):
+            user.email_verified = True
+            user.is_active = True
+            user.save()
+
+            return Response({"message": "Email verified successfully"})
+
+        return Response({"error": "Invalid or expired token"}, status=400)
