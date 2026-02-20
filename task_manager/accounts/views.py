@@ -60,3 +60,21 @@ class CreateOrganizationUserView(APIView):
             }, status=201)
 
         return Response(serializer.errors, status=400)
+
+
+
+
+class SetNewPasswordView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request):
+        serializer = SetNewPasswordSerializer(
+            data=request.data,
+            context={"request": request}
+        )
+
+        if serializer.is_valid():
+            serializer.save()
+            return Response({"message": "Password updated successfully"})
+        
+        return Response(serializer.errors, status=400)
