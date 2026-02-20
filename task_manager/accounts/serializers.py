@@ -6,6 +6,8 @@ from django.db import transaction
 import random
 
 User = get_user_model()
+from .utils import send_temporary_password_email
+
 
 class RegisterSerializer(serializers.Serializer):
     email = serializers.EmailField()
@@ -119,7 +121,7 @@ class CreateOrganizationUserSerializer(serializers.Serializer):
             must_change_password=True
         )
 
-        # In real production → send email
-        print(f"Temporary password for {user.email}: {temp_password}")
+        send_temporary_password_email(user, temp_password)
+
 
         return user
