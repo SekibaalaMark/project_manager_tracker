@@ -125,3 +125,27 @@ class CreateOrganizationUserSerializer(serializers.Serializer):
 
 
         return user
+
+
+
+
+class SetNewPasswordSerializer(serializers.Serializer):
+    new_password = serializers.CharField(write_only=True)
+    confirm_new_password = serializers.CharField(write_only=True)
+
+    def validate(self, data):
+        if len(data["new_password"]) < 6:
+            raise serializers.ValidationError("Password too short.")
+        
+        if data["new_password"] != data["confirm_new_password"]:
+            raise serializers.ValidationError("Passwords do not match.")
+        
+        return data
+
+    def save(self, **kwargs):
+        self.validated_data.pop("confirm_new_password")
+        user = self.context["request"].user
+        user.set_password(self.validated_data["new_password"])
+        user.must_change_password = False
+        user.save()
+        return user
