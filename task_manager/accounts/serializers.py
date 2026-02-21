@@ -154,3 +154,24 @@ class SetNewPasswordSerializer(serializers.Serializer):
         user.must_change_password = False
         user.save()
         return user
+    
+
+
+class ResendVerificationSerializer(serializers.Serializer):
+    email = serializers.EmailField()
+
+    def validate(self, data):
+        try:
+            user = User.objects.get(email=data["email"])
+        except User.DoesNotExist:
+            raise serializers.ValidationError("User with this email does not exist.")
+
+        if user.email_verified:
+            raise serializers.ValidationError("Email is already verified.")
+
+        self.user = user
+        return data
+
+    def save(self, **kwargs):
+        send_verification_email(self.context["request"],self.user)
+        return self.user
