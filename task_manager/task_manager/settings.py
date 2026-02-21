@@ -42,7 +42,7 @@ INSTALLED_APPS = [
 
 
     'django.contrib.sites',
-    
+
 
     'organizations',
     'accounts',
@@ -154,3 +154,20 @@ EMAIL_HOST_USER  = config('EMAIL_HOST_USER')
 EMAIL_HOST_PASSWORD = config('EMAIL_HOST_PASSWORD')
 EMAIL_USE_TLS    = config('EMAIL_USE_TLS', cast=bool)
 
+
+
+from datetime import timedelta
+
+SIMPLE_JWT = {
+    # 1. Token Lifetimes
+    "ACCESS_TOKEN_LIFETIME": timedelta(minutes=60),  # Short life for security
+    "REFRESH_TOKEN_LIFETIME": timedelta(days=1),     # Long life for convenience
+
+    # 2. Blacklisting & Rotation Logic
+    "ROTATE_REFRESH_TOKENS": True,   # Gives a NEW refresh token when old one is used
+    "BLACKLIST_AFTER_ROTATION": True, # Automatically blacklists the old refresh token
+    
+    # 3. Security Settings
+    "AUTH_HEADER_TYPES": ("Bearer",),
+    "AUTH_TOKEN_CLASSES": ("rest_framework_simplejwt.tokens.AccessToken",),
+}
