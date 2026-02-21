@@ -217,3 +217,39 @@ class ChangePasswordSerializer(serializers.Serializer):
         refresh = RefreshToken.for_user(user)
         refresh.blacklist()
         return user
+    
+
+
+
+class ForgotPasswordSerializer(serializers.Serializer):
+    email = serializers.EmailField()
+
+    def validate(self, data):
+        try:
+            user = User.objects.get(email=data["email"])
+        except User.DoesNotExist:
+            raise serializers.ValidationError(
+                {"email": "No user found with this email."}
+            )
+
+        data["user"] = user
+        return data
+
+    def save(self):
+        user = self.validated_data["user"]
+
+        # Generate temp password
+        temp_password = ''.join(random.choices(
+            string.ascii_letters + string.digits, k=8
+        ))
+
+        # Set new password
+        user.set_password(temp_password)
+        user.must_change_password = True
+        user.save()
+
+        # Send email
+        send_temporary_password_email(user, temp_password)
+
+        return user
+    
