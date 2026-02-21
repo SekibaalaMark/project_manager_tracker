@@ -9,5 +9,6 @@ urlpatterns = [
     path("verify-email/<uidb64>/<token>/",VerifyEmailView.as_view(),name="verify-email",),
     path("resend-verification/",ResendVerificationView.as_view(),name="resend-verification",),
     path("change-password/",ChangePasswordView.as_view(),name="change-password",),
+    path("forgot-password/", ForgotPasswordView.as_view(), name="forgot-password"),
 
 ]
