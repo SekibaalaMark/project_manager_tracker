@@ -86,7 +86,7 @@ from django.utils.http import urlsafe_base64_decode
 from django.utils.encoding import force_str
 from .tokens import *
 
-
+'''
 class VerifyEmailView(APIView):
     def get(self, request, uidb64, token):
         try:
@@ -103,3 +103,4 @@ class VerifyEmailView(APIView):
             return Response({"message": "Email verified successfully"})
 
         return Response({"error": "Invalid or expired token"}, status=400)
+'''
