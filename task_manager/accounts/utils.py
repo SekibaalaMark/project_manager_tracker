@@ -71,3 +71,9 @@ Please verify your email by clicking the link below:
     )
     email.attach_alternative(html_content, "text/html")
     email.send()
+
+
+
+
+
+
