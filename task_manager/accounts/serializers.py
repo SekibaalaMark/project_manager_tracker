@@ -8,6 +8,7 @@ from .utils import *
 
 User = get_user_model()
 from .utils import send_temporary_password_email
+from rest_framework_simplejwt.tokens import RefreshToken
 
 
 class RegisterSerializer(serializers.Serializer):
@@ -175,3 +176,44 @@ class ResendVerificationSerializer(serializers.Serializer):
     def save(self, **kwargs):
         send_verification_email(self.context["request"],self.user)
         return self.user
+    
+
+
+
+
+from django.contrib.auth.password_validation import validate_password
+
+class ChangePasswordSerializer(serializers.Serializer):
+    current_password = serializers.CharField(write_only=True)
+    new_password = serializers.CharField(write_only=True)
+    confirm_password = serializers.CharField(write_only=True)
+
+    def validate(self, data):
+        user = self.context["request"].user
+
+        # Check current password
+        if not user.check_password(data["current_password"]):
+            raise serializers.ValidationError(
+                {"current_password": "Current password is incorrect."}
+            )
+
+        # Validate new password using Django validators
+        if data['new_password'] != data['confirm_password']:
+            raise serializers.ValidationError({
+                "confirm_password": "The new passwords do not match."
+            })
+        
+        validate_password(data["new_password"], user)
+
+        return data
+
+    def save(self, **kwargs):
+        self.validated_data.pop("confirm_password")
+        user = self.context["request"].user
+        user.set_password(self.validated_data["new_password"])
+        user.save()
+ 
+
+        refresh = RefreshToken.for_user(user)
+        refresh.blacklist()
+        return user
