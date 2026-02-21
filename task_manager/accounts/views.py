@@ -86,7 +86,6 @@ from django.utils.http import urlsafe_base64_decode
 from django.utils.encoding import force_str
 from .tokens import *
 
-'''
 class VerifyEmailView(APIView):
     def get(self, request, uidb64, token):
         try:
@@ -103,4 +102,19 @@ class VerifyEmailView(APIView):
             return Response({"message": "Email verified successfully"})
 
         return Response({"error": "Invalid or expired token"}, status=400)
-'''
+
+
+
+
+class ResendVerificationView(APIView):
+    def post(self, request):
+        serializer = ResendVerificationSerializer(data=request.data,context={'request': request})
+
+        if serializer.is_valid():
+            serializer.save()
+            return Response(
+                {"message": "Verification email sent successfully."},
+                status=status.HTTP_200_OK
+            )
+
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
