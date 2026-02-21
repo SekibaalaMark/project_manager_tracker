@@ -140,3 +140,21 @@ class ChangePasswordView(APIView):
             )
 
         return Response(serializer.errors, status=400)
+    
+
+
+
+class ForgotPasswordView(APIView):
+    permission_classes = []
+
+    def post(self, request):
+        serializer = ForgotPasswordSerializer(data=request.data)
+
+        if serializer.is_valid():
+            serializer.save()
+            return Response(
+                {"message": "Temporary password sent to email."},
+                status=200
+            )
+
+        return Response(serializer.errors, status=400)
