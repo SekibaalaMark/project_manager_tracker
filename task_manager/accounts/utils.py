@@ -1,5 +1,6 @@
 from django.core.mail import send_mail
 from django.conf import settings
+from django.contrib.sites.models import Site
 
 def send_temporary_password_email(user, temp_password):
     subject = "Your Account Has Been Created"
@@ -38,7 +39,10 @@ def send_verification_email(request, user):
     uid = urlsafe_base64_encode(force_bytes(user.pk))
     token = email_verification_token.make_token(user)
 
-    verification_url = f"http://127.0.0.1:8000/api/auth/verify-email/{uid}/{token}/"
+    #verification_url = f"http://127.0.0.1:8000/api/auth/verify-email/{uid}/{token}/"
+    current_site = Site.objects.get_current()
+    domain = current_site.domain  # e.g., 'myapp.com'
+    verification_url = f"https://{domain}/api/auth/verify-email/{uid}/{token}/"
 
     subject = "Verify Your Email"
     text_content = f"""
