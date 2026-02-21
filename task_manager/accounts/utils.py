@@ -39,10 +39,13 @@ def send_verification_email(request, user):
     uid = urlsafe_base64_encode(force_bytes(user.pk))
     token = email_verification_token.make_token(user)
 
-    #verification_url = f"http://127.0.0.1:8000/api/auth/verify-email/{uid}/{token}/"
-    current_site = Site.objects.get_current()
-    domain = current_site.domain  # e.g., 'myapp.com'
-    verification_url = f"https://{domain}/api/auth/verify-email/{uid}/{token}/"
+    #link = reverse('register', kwargs={'uidb64': uid, 'token': token})
+    #verification_url = f"{request.scheme}://{request.get_host()}{link}"
+
+    verification_url = f"http://127.0.0.1:8000/api/auth/verify-email/{uid}/{token}/"
+    #current_site = Site.objects.get_current()
+    #domain = current_site.domain  # e.g., 'myapp.com'
+    #verification_url = f"https://{domain}/api/auth/verify-email/{uid}/{token}/"
 
     subject = "Verify Your Email"
     text_content = f"""
