@@ -14,7 +14,7 @@ class Project(models.Model):
 
     name = models.CharField(max_length=255)
     organization = models.ForeignKey(
-        "accounts.Organization",
+        "organizations.Organization",
         on_delete=models.CASCADE,
         related_name="projects"
     )
@@ -69,7 +69,7 @@ class Task(models.Model):
     )
 
     organization = models.ForeignKey(
-        "accounts.Organization",
+        "organizations.Organization",
         on_delete=models.CASCADE,
     )
 
