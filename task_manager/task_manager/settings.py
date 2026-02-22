@@ -46,6 +46,7 @@ INSTALLED_APPS = [
 
     'organizations',
     'accounts',
+    'projects',
     'rest_framework',
     'rest_framework_simplejwt',
     'rest_framework_simplejwt.token_blacklist',
