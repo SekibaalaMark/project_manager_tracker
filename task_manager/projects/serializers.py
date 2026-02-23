@@ -85,3 +85,34 @@ class TaskCreateSerializer(serializers.ModelSerializer):
         )
 
         return task
+    
+
+
+
+class MemberTaskStatusUpdateSerializer(serializers.ModelSerializer):
+
+    class Meta:
+        model = Task
+        fields = ["status"]
+
+    def validate_status(self, value):
+        allowed_statuses = ["IN_PROGRESS", "COMPLETED"]
+
+        if value not in allowed_statuses:
+            raise serializers.ValidationError(
+                "You can only set status to IN_PROGRESS or COMPLETED."
+            )
+
+        return value
+
+    def validate(self, data):
+        request = self.context["request"]
+        task = self.instance
+
+        # Ensure member only updates their own task
+        if task.assigned_to != request.user:
+            raise serializers.ValidationError(
+                "You can only update tasks assigned to you."
+            )
+
+        return data
