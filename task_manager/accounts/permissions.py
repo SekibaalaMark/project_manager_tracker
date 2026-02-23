@@ -13,3 +13,12 @@ class IsManager(BasePermission):
 class IsOwnerOrManager(BasePermission):
     def has_permission(self, request, view):
         return request.user.is_authenticated and request.user.role in ["OWNER", "MANAGER"]
+    
+
+
+class IsMember(BasePermission):
+    def has_permission(self, request, view):
+        return (
+            request.user.is_authenticated
+            and request.user.role == "MEMBER"
+        )
