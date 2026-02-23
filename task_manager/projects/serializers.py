@@ -116,3 +116,33 @@ class MemberTaskStatusUpdateSerializer(serializers.ModelSerializer):
             )
 
         return data
+
+
+
+from django.db.models import Count, Q
+
+
+class OwnerDashboardProjectSerializer(serializers.ModelSerializer):
+
+    created_by = serializers.SerializerMethodField()
+    total_tasks = serializers.IntegerField(read_only=True)
+    completed_tasks = serializers.IntegerField(read_only=True)
+
+    class Meta:
+        model = Project
+        fields = [
+            "id",
+            "name",
+            "status",
+            "created_by",
+            "total_tasks",
+            "completed_tasks",
+            "created_at",
+        ]
+
+    def get_created_by(self, obj):
+        return {
+            "id": obj.created_by.id,
+            "username": obj.created_by.username,
+            "email": obj.created_by.email,
+        }
