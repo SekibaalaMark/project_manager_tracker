@@ -48,3 +48,21 @@ class ManagerCreateTaskView(APIView):
             )
 
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+    
+
+
+
+from rest_framework.generics import UpdateAPIView
+
+class MemberUpdateTaskStatusView(UpdateAPIView):
+
+    serializer_class = MemberTaskStatusUpdateSerializer
+    permission_classes = [IsAuthenticated, IsMember]
+    lookup_field = "id"
+
+    def get_queryset(self):
+        # Member can only access their own tasks
+        return Task.objects.filter(
+            assigned_to=self.request.user,
+            organization=self.request.user.organization
+        )
