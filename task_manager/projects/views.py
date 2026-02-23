@@ -25,3 +25,26 @@ class ManagerCreateProjectView(APIView):
             )
 
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+    
+
+
+
+
+class ManagerCreateTaskView(APIView):
+
+    permission_classes = [IsAuthenticated, IsManager]
+
+    def post(self, request):
+        serializer = TaskCreateSerializer(
+            data=request.data,
+            context={"request": request}
+        )
+
+        if serializer.is_valid():
+            task = serializer.save()
+            return Response(
+                TaskCreateSerializer(task).data,
+                status=status.HTTP_201_CREATED
+            )
+
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
