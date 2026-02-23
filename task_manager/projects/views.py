@@ -66,3 +66,32 @@ class MemberUpdateTaskStatusView(UpdateAPIView):
             assigned_to=self.request.user,
             organization=self.request.user.organization
         )
+    
+
+
+
+
+from rest_framework.generics import ListAPIView
+from django.db.models import Count, Q
+
+class OwnerDashboardView(ListAPIView):
+
+    serializer_class = OwnerDashboardProjectSerializer
+    permission_classes = [IsAuthenticated, IsOwner]
+
+    def get_queryset(self):
+        user = self.request.user
+
+        return (
+            Project.objects
+            .filter(organization=user.organization)
+            .select_related("created_by")
+            .annotate(
+                total_tasks=Count("tasks"),
+                completed_tasks=Count(
+                    "tasks",
+                    filter=Q(tasks__status="COMPLETED")
+                )
+            )
+            .order_by("-created_at")
+        )
