@@ -1,6 +1,7 @@
 from rest_framework import serializers
 from .models import Project
 from activity.utils import *
+from activity.utils import *
 
 
 class ProjectCreateSerializer(serializers.ModelSerializer):
@@ -107,6 +108,7 @@ class MemberTaskStatusUpdateSerializer(serializers.ModelSerializer):
     def validate_status(self, value):
         allowed_statuses = ["IN_PROGRESS", "COMPLETED"]
 
+
         if value not in allowed_statuses:
             raise serializers.ValidationError(
                 "You can only set status to IN_PROGRESS or COMPLETED."
@@ -115,13 +117,31 @@ class MemberTaskStatusUpdateSerializer(serializers.ModelSerializer):
         return value
 
     def validate(self, data):
+        
+
         request = self.context["request"]
         task = self.instance
+
+        old_status = task.status
+        new_status = data.get("status")
+
+
+        
 
         # Ensure member only updates their own task
         if task.assigned_to != request.user:
             raise serializers.ValidationError(
                 "You can only update tasks assigned to you."
+            )
+       
+        log_activity(
+                user=self.context["request"].user,
+                action="Updated Task Status",
+                metadata={
+                    "task_id": task.id,
+                    "old_status": old_status,
+                    "new_status": new_status
+                }
             )
 
         return data
@@ -129,7 +149,6 @@ class MemberTaskStatusUpdateSerializer(serializers.ModelSerializer):
 
 
 from django.db.models import Count, Q
-
 
 class OwnerDashboardProjectSerializer(serializers.ModelSerializer):
 
