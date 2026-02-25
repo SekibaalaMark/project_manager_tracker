@@ -146,3 +146,11 @@ class OwnerDashboardProjectSerializer(serializers.ModelSerializer):
             "username": obj.created_by.username,
             "email": obj.created_by.email,
         }
+    
+
+class OwnerDashboardMetricsSerializer(serializers.Serializer):
+    total_projects = serializers.IntegerField()
+    pending_projects = serializers.IntegerField()
+    in_progress_projects = serializers.IntegerField()
+    completed_projects = serializers.IntegerField()
+    total_tasks = serializers.IntegerField()
