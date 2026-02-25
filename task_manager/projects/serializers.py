@@ -1,5 +1,6 @@
 from rest_framework import serializers
 from .models import Project
+from activity.utils import *
 
 
 class ProjectCreateSerializer(serializers.ModelSerializer):
@@ -19,6 +20,14 @@ class ProjectCreateSerializer(serializers.ModelSerializer):
             created_by=user,
             status="PENDING"
         )
+        log_activity(
+        user=user,
+        action="Created Project",
+        metadata={
+        "project_id": project.id,
+        "project_name": project.name
+    }
+)
 
         return project
     
