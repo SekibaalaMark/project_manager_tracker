@@ -6,7 +6,8 @@ urlpatterns = [
     path("create-tasks/",ManagerCreateTaskView.as_view(),name="manager-create-task",),
     path("<int:id>/update-task-status/",MemberUpdateTaskStatusView.as_view(),
          name="member-update-task-status",),
-    path("owner-projects-summary/",OwnerDashboardView.as_view(),name="owner-dashboard",
-),
+    path("owner-projects-summary/",OwnerDashboardView.as_view(),name="owner-dashboard",),
+    path("owner-dashboard-metrics/",OwnerDashboardMetricsView.as_view(),name="owner-dashboard-metrics",),
+
     
 ]
