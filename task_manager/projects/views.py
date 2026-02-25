@@ -95,3 +95,33 @@ class OwnerDashboardView(ListAPIView):
             )
             .order_by("-created_at")
         )
+    
+
+
+class OwnerDashboardMetricsView(APIView):
+
+    permission_classes = [IsAuthenticated, IsOwner]
+
+    def get(self, request):
+        org = request.user.organization
+
+        project_stats = Project.objects.filter(
+            organization=org
+        ).aggregate(
+            total_projects=Count("id"),
+            pending_projects=Count("id", filter=Q(status="PENDING")),
+            in_progress_projects=Count("id", filter=Q(status="IN_PROGRESS")),
+            completed_projects=Count("id", filter=Q(status="COMPLETED")),
+        )
+
+        total_tasks = Task.objects.filter(
+            organization=org
+        ).count()
+
+        data = {
+            **project_stats,
+            "total_tasks": total_tasks,
+        }
+
+        serializer = OwnerDashboardMetricsSerializer(data)
+        return Response(serializer.data)
