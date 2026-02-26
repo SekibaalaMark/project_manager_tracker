@@ -199,3 +199,48 @@ class ManagerPerformanceAnalyticsView(APIView):
 
         serializer = ManagerPerformanceSerializer(analytics, many=True)
         return Response(serializer.data)
+
+
+
+
+'''
+class ManagerPerformanceAnalyticsView(APIView):
+    permission_classes = [IsAuthenticated, IsOwner]
+
+    def get(self, request):
+        org = request.user.organization
+
+        # One query to rule them all
+        analytics = CustomUser.objects.filter(
+            organization=org, 
+            role="MANAGER"
+        ).annotate(
+            # Count projects created by this manager
+            total_projects=Count("created_projects", distinct=True),
+            
+            pending_projects=Count(
+                "created_projects", 
+                filter=Q(created_projects__status="PENDING"),
+                distinct=True
+            ),
+            
+            completed_projects=Count(
+                "created_projects", 
+                filter=Q(created_projects__status="COMPLETED"),
+                distinct=True
+            ),
+
+            # Count tasks in projects created by this manager
+            total_tasks=Count("created_projects__tasks", distinct=True),
+            
+            completed_tasks=Count(
+                "created_projects__tasks", 
+                filter=Q(created_projects__tasks__status="COMPLETED"),
+                distinct=True
+            )
+        )
+
+        # We still use many=True because we have a list of manager objects
+        serializer = ManagerPerformanceSerializer(analytics, many=True)
+        return Response(serializer.data)
+'''
