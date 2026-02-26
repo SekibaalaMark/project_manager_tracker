@@ -48,6 +48,7 @@ INSTALLED_APPS = [
     'accounts',
     'projects',
     'activity',
+    'notifications',
     'rest_framework',
     'rest_framework_simplejwt',
     'rest_framework_simplejwt.token_blacklist',
