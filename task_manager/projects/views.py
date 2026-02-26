@@ -125,3 +125,77 @@ class OwnerDashboardMetricsView(APIView):
 
         serializer = OwnerDashboardMetricsSerializer(data)
         return Response(serializer.data)
+    
+
+
+
+
+
+from django.db.models import Count, Q, F, FloatField, ExpressionWrapper
+from accounts.models import CustomUser
+
+
+class ManagerPerformanceAnalyticsView(APIView):
+
+    permission_classes = [IsAuthenticated, IsOwner]
+
+    def get(self, request):
+        org = request.user.organization
+
+        managers = CustomUser.objects.filter(
+            organization=org,
+            role="MANAGER"
+        )
+
+        analytics = []
+
+        for manager in managers:
+
+            projects = Project.objects.filter(
+                organization=org,
+                created_by=manager
+            )
+
+            total_projects = projects.count()
+
+            pending_projects = projects.filter(
+                status="PENDING"
+            ).count()
+
+            in_progress_projects = projects.filter(
+                status="IN_PROGRESS"
+            ).count()
+
+            completed_projects = projects.filter(
+                status="COMPLETED"
+            ).count()
+
+            tasks = Task.objects.filter(
+                organization=org,
+                project__created_by=manager
+            )
+
+            total_tasks = tasks.count()
+            completed_tasks = tasks.filter(
+                status="COMPLETED"
+            ).count()
+
+            completion_rate = (
+                (completed_tasks / total_tasks) * 100
+                if total_tasks > 0 else 0
+            )
+
+            analytics.append({
+                "manager_id": manager.id,
+                "username": manager.username,
+                "total_projects": total_projects,
+                "pending_projects": pending_projects,
+                "in_progress_projects": in_progress_projects,
+                "completed_projects": completed_projects,
+                "total_tasks": total_tasks,
+                "completed_tasks": completed_tasks,
+                "completion_rate": round(completion_rate, 2)
+            })
+
+        serializer = ManagerPerformanceSerializer(analytics, many=True)
+        return Response(serializer.data)
