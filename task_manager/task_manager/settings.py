@@ -51,6 +51,7 @@ INSTALLED_APPS = [
     'rest_framework',
     'rest_framework_simplejwt',
     'rest_framework_simplejwt.token_blacklist',
+    "channels",
 
 ]
 
@@ -172,4 +173,14 @@ SIMPLE_JWT = {
     # 3. Security Settings
     "AUTH_HEADER_TYPES": ("Bearer",),
     "AUTH_TOKEN_CLASSES": ("rest_framework_simplejwt.tokens.AccessToken",),
+}
+
+
+
+ASGI_APPLICATION = "task_manager.asgi.application"   #For production → Use Redis later
+
+CHANNEL_LAYERS = {  # For production → Use Redis later
+    "default": {
+        "BACKEND": "channels.layers.InMemoryChannelLayer",
+    },
 }
