@@ -182,3 +182,16 @@ class OwnerDashboardMetricsSerializer(serializers.Serializer):
     in_progress_projects = serializers.IntegerField()
     completed_projects = serializers.IntegerField()
     total_tasks = serializers.IntegerField()
+
+
+
+class ManagerPerformanceSerializer(serializers.Serializer):
+    manager_id = serializers.IntegerField()
+    username = serializers.CharField()
+    total_projects = serializers.IntegerField()
+    pending_projects = serializers.IntegerField()
+    in_progress_projects = serializers.IntegerField()
+    completed_projects = serializers.IntegerField()
+    total_tasks = serializers.IntegerField()
+    completed_tasks = serializers.IntegerField()
+    completion_rate = serializers.FloatField()
