@@ -4,6 +4,8 @@ from activity.utils import *
 from activity.utils import *
 from notifications.utils import *
 
+from django_q.tasks import async_task
+from notifications.utils import send_system_email
 
 class ProjectCreateSerializer(serializers.ModelSerializer):
 
@@ -99,6 +101,13 @@ class TaskCreateSerializer(serializers.ModelSerializer):
             validated_data["assigned_to"],
             f"You have been assigned a new task: {task.title}"
         )
+
+        async_task(
+            send_system_email,
+            "Task Assigned",
+            f"You were assigned task '{task.title}'.",
+            [task.assigned_to.email],
+                                                        )
 
         return task
     
