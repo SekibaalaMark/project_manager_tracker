@@ -149,6 +149,10 @@ class MemberTaskStatusUpdateSerializer(serializers.ModelSerializer):
                     "new_status": new_status
                 }
             )
+        send_notification(
+            task.project.created_by,
+            f"Task '{task.title}' status changed to {task.status}"
+                                                                    )
 
         return data
 
