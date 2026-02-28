@@ -2,6 +2,7 @@ from rest_framework import serializers
 from .models import Project
 from activity.utils import *
 from activity.utils import *
+from notifications.utils import *
 
 
 class ProjectCreateSerializer(serializers.ModelSerializer):
@@ -92,6 +93,11 @@ class TaskCreateSerializer(serializers.ModelSerializer):
             assigned_to=validated_data["assigned_to"],
             organization=user.organization,
             status="PENDING",
+        )
+
+        send_notification(
+            validated_data["assigned_to"],
+            f"You have been assigned a new task: {task.title}"
         )
 
         return task
