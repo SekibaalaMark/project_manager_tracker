@@ -169,6 +169,13 @@ class MemberTaskStatusUpdateSerializer(serializers.ModelSerializer):
             task.project.created_by,
             f"Task '{task.title}' status changed to {task.status}"
                                                                     )
+        
+        async_task(
+                send_system_email,
+                "Task Status Updated",
+                f"Task '{task.title}' is now {task.status}.",
+                [task.project.created_by.email],
+                                                                )
 
         return data
 
