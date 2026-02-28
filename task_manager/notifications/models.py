@@ -5,7 +5,7 @@ from django.conf import settings
 class Notification(models.Model):
 
     organization = models.ForeignKey(
-        "accounts.Organization",
+        "organizations.Organization",
         on_delete=models.CASCADE
     )
 
