@@ -182,6 +182,6 @@ ASGI_APPLICATION = "task_manager.asgi.application"   #For production → Use Red
 
 CHANNEL_LAYERS = {  # For production → Use Redis later
     "default": {
-        "BACKEND": "channels.layers.InMemoryChannelLayer",
+        "BACKEND": "channels_redis.core.RedisChannelLayer",
     },
 }
