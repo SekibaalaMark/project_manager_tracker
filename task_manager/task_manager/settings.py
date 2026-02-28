@@ -186,3 +186,21 @@ CHANNEL_LAYERS = {  # For production → Use Redis later
         "BACKEND": "channels_redis.core.RedisChannelLayer",
     },
 }
+
+
+
+
+Q_CLUSTER = {
+    "name": "project_system",
+    "workers": 4,
+    "timeout": 60,
+    "retry": 120,
+    "queue_limit": 50,
+    "bulk": 10,
+    "orm": False,
+    "redis": {
+        "host": "127.0.0.1",
+        "port": 6379,
+        "db": 0,
+    }
+}
