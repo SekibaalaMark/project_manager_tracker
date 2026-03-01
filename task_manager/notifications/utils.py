@@ -39,3 +39,28 @@ def send_system_email(subject, message, recipient_list):
         fail_silently=False,
     )
 
+
+
+
+from django.core.mail import send_mail
+from django.conf import settings
+from django.contrib.sites.models import Site
+
+def send_Project_creation_email(user, project):
+    subject = "New Project Created"
+
+    message = f"""
+Hello {user.username},
+A New Project {project.name} Has been created by {project.created_by.username}
+
+Best regards,
+{project.organization.name} Team
+"""
+
+    send_mail(
+        subject,
+        message,
+        settings.DEFAULT_FROM_EMAIL,
+        [user.email],
+        fail_silently=False,
+    )
