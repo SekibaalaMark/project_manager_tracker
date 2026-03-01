@@ -4,7 +4,7 @@ from django.conf import settings
 User = settings.AUTH_USER_MODEL
 
 from django_q.tasks import async_task
-from notifications.utils import send_system_email
+from notifications.utils import *
 
 
 
@@ -42,12 +42,16 @@ class Project(models.Model):
 
         elif all(task.status == "COMPLETED" for task in tasks):
             self.status = "COMPLETED"
+            '''
             async_task(
                     send_system_email,
                     "Project Completed",
                     f"Project '{self.name}' has been completed.",
                     [self.created_by.email],
                 )
+                '''
+            send_Project_completion_email(self.created_by,self)
+            
 
         elif any(task.status != "PENDING" for task in tasks):
             self.status = "IN_PROGRESS"
