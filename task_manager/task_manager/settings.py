@@ -90,12 +90,29 @@ WSGI_APPLICATION = "task_manager.wsgi.application"
 # Database
 # https://docs.djangoproject.com/en/5.2/ref/settings/#databases
 
+
+'''
 DATABASES = {
     "default": {
         "ENGINE": "django.db.backends.sqlite3",
         "NAME": BASE_DIR / "db.sqlite3",
     }
 }
+'''
+
+import dj_database_url
+from decouple import config
+
+# Use decouple to get the URL from .env
+DATABASES = {
+    'default': dj_database_url.config(
+        default=config('DATABASE_URL'),
+        conn_max_age=600,
+        ssl_require=True
+    )
+}
+
+
 
 
 # Password validation
@@ -189,10 +206,13 @@ CHANNEL_LAYERS = {  # For production → Use Redis later
 
 
 
+import multiprocessing
+
+multiprocessing.set_start_method("spawn", force=True)
 
 Q_CLUSTER = {
     "name": "project_system",
-    "workers": 4,
+    "workers": 1,
     "timeout": 60,
     "retry": 120,
     "queue_limit": 50,
