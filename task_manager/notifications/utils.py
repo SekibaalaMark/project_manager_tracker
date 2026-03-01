@@ -38,3 +38,4 @@ def send_system_email(subject, message, recipient_list):
         recipient_list=recipient_list,
         fail_silently=False,
     )
+
