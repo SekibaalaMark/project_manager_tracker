@@ -88,3 +88,26 @@ def send_Project_completion_email(user, project):
         fail_silently=False,
     )
 	
+
+
+
+
+
+def send_task_assignment_email(user, task):
+    subject = "New task Alert"
+
+    message = f"""
+    Hello {user.username},
+    You have been assigned to perfom Task {task.title} part of {task.project.name} Project.
+
+    Best regards,
+    {task.project.organization.name} Team
+    """
+
+    send_mail(
+        subject,
+        message,
+        settings.DEFAULT_FROM_EMAIL,
+        [user.email],
+        fail_silently=False,
+    )
