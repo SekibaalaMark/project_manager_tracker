@@ -6,7 +6,8 @@ from notifications.utils import *
 from accounts.models import *
 
 from django_q.tasks import async_task
-from notifications.utils import send_system_email
+from notifications.utils import *
+
 
 class ProjectCreateSerializer(serializers.ModelSerializer):
 
@@ -25,12 +26,19 @@ class ProjectCreateSerializer(serializers.ModelSerializer):
             created_by=user,
             status="PENDING"
         )
+
+        '''
         async_task(
             send_system_email,
             "New Project Created",
             f"Project '{project.name}' has been created by {project.created_by.username}.",
             [CustomUser.objects.filter(organization=user.organization,role="OWNER").values_list('email', flat=True)[0]],
                                                                 )
+        '''
+        owner = CustomUser.objects.get(organization=user.organization, role="OWNER")
+
+        send_Project_creation_email(owner,project)
+
         log_activity(
         user=user,
         action="Created Project",
