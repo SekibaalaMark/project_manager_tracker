@@ -197,10 +197,6 @@ Q_CLUSTER = {
     "retry": 120,
     "queue_limit": 50,
     "bulk": 10,
-    "orm": False,
-    "redis": {
-        "host": "127.0.0.1",
-        "port": 6379,
-        "db": 0,
-    }
+    "orm": True,
+    "save_limit": 100,
 }
