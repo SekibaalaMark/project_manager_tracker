@@ -198,9 +198,10 @@ SIMPLE_JWT = {
 
 ASGI_APPLICATION = "task_manager.asgi.application"   #For production → Use Redis later
 
-CHANNEL_LAYERS = {  # For production → Use Redis later
+# settings.py
+CHANNEL_LAYERS = {
     "default": {
-        "BACKEND": "channels_redis.core.RedisChannelLayer",
+        "BACKEND": "channels.layers.InMemoryChannelLayer", # Change this line
     },
 }
 
