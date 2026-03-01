@@ -116,13 +116,17 @@ class TaskCreateSerializer(serializers.ModelSerializer):
             validated_data["assigned_to"],
             f"You have been assigned a new task: {task.title}"
         )
+        receipient = validated_data['assigned_to']
+        send_task_assignment_email(receipient,task)
 
+        '''
         async_task(
             send_system_email,
             "Task Assigned",
             f"You were assigned task '{task.title}'.",
             [task.assigned_to.email],
                                                         )
+        '''
 
         return task
     
@@ -177,14 +181,14 @@ class MemberTaskStatusUpdateSerializer(serializers.ModelSerializer):
             task.project.created_by,
             f"Task '{task.title}' status changed to {task.status}"
                                                                     )
-        
+        '''
         async_task(
                 send_system_email,
                 "Task Status Updated",
                 f"Task '{task.title}' is now {task.status}.",
                 [task.project.created_by.email],
                                                                 )
-
+        '''
         return data
 
 
