@@ -124,6 +124,10 @@ class Task(models.Model):
         if self.status !="COMPLETED" and self.end_date < timezone.now().date():
             return True
         return False
+    
+    @project
+    def duration(self):
+        return (self.end_date - self.start_date).days
 
     created_at = models.DateTimeField(auto_now_add=True)
 
