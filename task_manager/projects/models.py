@@ -1,6 +1,6 @@
 from django.db import models
 from django.conf import settings
-
+from django.utils import timezone
 User = settings.AUTH_USER_MODEL
 
 from django_q.tasks import async_task
@@ -32,7 +32,13 @@ class Project(models.Model):
         choices=STATUS_CHOICES,
         default="PENDING"
     )
+    start_date = models.DateField()
+    end_date = models.DateField()
+
+
     created_at = models.DateTimeField(auto_now_add=True)
+
+
 
     def update_status(self):
         tasks = self.tasks.all()
@@ -60,6 +66,13 @@ class Project(models.Model):
             self.status = "PENDING"
 
         self.save(update_fields=["status"])
+        @property
+        def is_overdue(self):
+            if self.status != "COMPLETED" and self.end_date < timezone.now().date():
+                return True
+            return False
+        
+        
 
     def __str__(self):
         return self.name
