@@ -13,8 +13,14 @@ class ProjectCreateSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Project
-        fields = ["id", "name", "status", "created_at"]
+        fields = ["id", "name", "status", "created_at","end_date","start_date"]
         read_only_fields = ["id", "status", "created_at"]
+    
+    def validate(self, data):
+        if data['end_date'] < data['start_date']:
+            raise serializers.ValidationError("End Date must be after start Date")
+        return data
+        
 
     def create(self, validated_data):
         request = self.context["request"]
