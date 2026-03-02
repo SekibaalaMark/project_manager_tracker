@@ -116,6 +116,15 @@ class Task(models.Model):
         default="PENDING"
     )
 
+    start_date = models.DateField()
+    end_date = models.DateField()
+
+    @property
+    def is_overdue(self):
+        if self.status !="COMPLETED" and self.end_date < timezone.now().date():
+            return True
+        return False
+
     created_at = models.DateTimeField(auto_now_add=True)
 
     def save(self, *args, **kwargs):
