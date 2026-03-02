@@ -80,6 +80,9 @@ class TaskCreateSerializer(serializers.ModelSerializer):
         project = data["project"]
         assigned_user = data["assigned_to"]
 
+        if project.start_date < data['start_date']:
+            serializers.ValidationError("A task can't start before a project")
+
         if data['end_date'] < data['start_date']:
             raise serializers.ValidationError("End date must ahead of start date")
 
