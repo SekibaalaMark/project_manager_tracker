@@ -67,13 +67,13 @@ class Project(models.Model):
 
         self.save(update_fields=["status"])
         @property
-        def is_overdue(self):
+        def is_project_overdue(self):
             if self.status != "COMPLETED" and self.end_date < timezone.now().date():
                 return True
             return False
         
         @property
-        def duration(self):
+        def project_duration(self):
             return (self.end_date - self.start_date).days
         
         
@@ -125,7 +125,7 @@ class Task(models.Model):
             return True
         return False
     
-    @project
+    @property
     def duration(self):
         return (self.end_date - self.start_date).days
 
