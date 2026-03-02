@@ -72,6 +72,10 @@ class Project(models.Model):
                 return True
             return False
         
+        @property
+        def duration(self):
+            return (self.end_date - self.start_date).days
+        
         
 
     def __str__(self):
