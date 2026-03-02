@@ -70,7 +70,7 @@ class TaskCreateSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Task
-        fields = ["id", "title", "project", "assigned_to", "status", "created_at"]
+        fields = ["id", "title", "project", "assigned_to", "status", "created_at","end_date","start_date"]
         read_only_fields = ["id", "status", "created_at"]
 
     def validate(self, data):
@@ -79,6 +79,9 @@ class TaskCreateSerializer(serializers.ModelSerializer):
 
         project = data["project"]
         assigned_user = data["assigned_to"]
+
+        if data['end_date'] < data['start_date']:
+            raise serializers.ValidationError("End date must ahead of start date")
 
         # 1️⃣ Ensure project belongs to manager's organization
         if project.organization != user.organization:
