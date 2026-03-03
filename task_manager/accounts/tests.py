@@ -54,3 +54,5 @@ class CustomUserModelTest(TestCase):
         from django.db import IntegrityError
         with self.assertRaises(IntegrityError):
             User.objects.create_user(username="unique_user", password="password456")
+
+
