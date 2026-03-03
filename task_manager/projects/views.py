@@ -260,6 +260,9 @@ class ProjectGanttDataView(APIView):
 
         project = get_object_or_404(Project, id=project_id,organization=request.user.organization)
 
+        if request.user.role == "MEMBER":
+            tasks = project.tasks.filter(assigned_to=request.user)
+
         tasks = project.tasks.all()
 
         data = []
