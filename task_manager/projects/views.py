@@ -244,3 +244,35 @@ class ManagerPerformanceAnalyticsView(APIView):
         serializer = ManagerPerformanceSerializer(analytics, many=True)
         return Response(serializer.data)
 '''
+
+
+
+
+
+
+class ProjectGanttDataView(APIView):
+
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request, project_id):
+
+        from django.shortcuts import get_object_or_404
+
+        project = get_object_or_404(Project, id=project_id, created_by=request.user)
+
+        tasks = project.tasks.all()
+
+        data = []
+
+        for task in tasks:
+            progress = 100 if task.status == "COMPLETED" else 0
+
+            data.append({
+                "id": task.id,
+                "name": task.title,
+                "start": task.start_date,
+                "end": task.end_date,
+                "progress": progress,
+            })
+
+        return Response(data)
