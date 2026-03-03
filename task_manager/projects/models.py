@@ -66,16 +66,16 @@ class Project(models.Model):
             self.status = "PENDING"
 
         self.save(update_fields=["status"])
-        @property
-        def is_project_overdue(self):
-            if self.status != "COMPLETED" and self.end_date < timezone.now().date():
-                return True
-            return False
+    @property
+    def is_overdue(self):
+        if self.status != "COMPLETED" and self.end_date < timezone.now().date():
+            return True
+        return False
         
-        @property
-        def project_duration(self):
-            return (self.end_date - self.start_date).days
-        
+    @property
+    def duration(self):
+        return (self.end_date - self.start_date).days
+    
         
 
     def __str__(self):
