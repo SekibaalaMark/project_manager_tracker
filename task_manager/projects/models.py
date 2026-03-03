@@ -76,7 +76,7 @@ class Project(models.Model):
     def duration(self):
         return (self.end_date - self.start_date).days
     
-        
+    
 
     def __str__(self):
         return self.name
