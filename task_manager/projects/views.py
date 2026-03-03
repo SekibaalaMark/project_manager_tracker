@@ -258,7 +258,7 @@ class ProjectGanttDataView(APIView):
 
         from django.shortcuts import get_object_or_404
 
-        project = get_object_or_404(Project, id=project_id, created_by=request.user)
+        project = get_object_or_404(Project, id=project_id,organization=request.user.organization)
 
         tasks = project.tasks.all()
 
