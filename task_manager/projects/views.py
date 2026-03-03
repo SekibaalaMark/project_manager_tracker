@@ -262,8 +262,8 @@ class ProjectGanttDataView(APIView):
 
         if request.user.role == "MEMBER":
             tasks = project.tasks.filter(assigned_to=request.user)
-
-        tasks = project.tasks.all()
+        else:
+            tasks = project.tasks.all()
 
         data = []
 
