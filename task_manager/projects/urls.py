@@ -8,7 +8,5 @@ urlpatterns = [
     path("owner-projects-summary/",OwnerDashboardView.as_view(),name="owner-dashboard",),
     path("owner-dashboard-metrics/",OwnerDashboardMetricsView.as_view(),name="owner-dashboard-metrics",),
     path("owner/analytics/managers/",ManagerPerformanceAnalyticsView.as_view(),name="manager-performance-analytics",),
-
-
-    
+    path("projects/<int:project_id>/gantt/",ProjectGanttDataView.as_view(),name="project-gantt-data"),
 ]
