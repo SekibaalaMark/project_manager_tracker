@@ -126,3 +126,72 @@ class RegisterSerializerTest(TestCase):
 
         # Because of transaction.atomic(), the organization should not exist
         self.assertFalse(Organization.objects.filter(name="Mark Ventures").exists())
+
+
+
+
+from django.test import TestCase
+from django.contrib.auth import get_user_model
+from rest_framework import serializers
+from .serializers import LoginSerializer
+
+User = get_user_model()
+
+class LoginSerializerTest(TestCase):
+
+    def setUp(self):
+        self.password = "SecurePassword123"
+        self.user = User.objects.create_user(
+            username="mark_manager",
+            password=self.password,
+            email_verified=True,
+            is_active=True,
+            role="MEMBER"
+        )
+
+    def test_login_success(self):
+        """Verify successful login returns user and JWT tokens"""
+        data = {"username": "mark_manager", "password": self.password}
+        serializer = LoginSerializer(data=data)
+        
+        self.assertTrue(serializer.is_valid())
+        validated_data = serializer.validated_data
+        
+        self.assertIn("access", validated_data)
+        self.assertIn("refresh", validated_data)
+        self.assertEqual(validated_data["user"], self.user)
+
+    def test_login_invalid_credentials(self):
+        """Verify failure with wrong password"""
+        data = {"username": "mark_manager", "password": "wrongpassword"}
+        serializer = LoginSerializer(data=data)
+        
+        self.assertFalse(serializer.is_valid())
+        self.assertEqual(serializer.errors['non_field_errors'][0], "Invalid username or password.")
+
+    def test_login_inactive_user(self):
+        """Verify failure for disabled accounts"""
+        self.user.is_active = False
+        self.user.save()
+        
+        data = {"username": "mark_manager", "password": self.password}
+        serializer = LoginSerializer(data=data)
+        
+        self.assertFalse(serializer.is_valid())
+        self.assertEqual(serializer.errors['non_field_errors'][0], "User account is disabled.")
+
+    def test_owner_email_verification_required(self):
+        """Verify that Owners cannot login without email verification"""
+        owner = User.objects.create_user(
+            username="owner_user",
+            password=self.password,
+            role="OWNER",
+            email_verified=False,
+            is_active=True
+        )
+        
+        data = {"username": "owner_user", "password": self.password}
+        serializer = LoginSerializer(data=data)
+        
+        self.assertFalse(serializer.is_valid())
+        self.assertEqual(serializer.errors['non_field_errors'][0], "Please verify your email first.")
