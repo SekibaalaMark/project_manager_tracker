@@ -679,3 +679,63 @@ class CreateOrganizationUserViewTests(APITestCase):
         response = self.client.post(self.url, payload, format='json')
         
         self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
+
+
+
+
+
+from django.urls import reverse
+from django.utils.http import urlsafe_base64_encode
+from django.utils.encoding import force_bytes
+
+from .tokens import email_verification_token # Ensure path matches your project
+
+User = get_user_model()
+
+class VerifyEmailViewTests(APITestCase):
+    def setUp(self):
+        self.user = User.objects.create_user(
+            username="unverified_mark",
+            email="mark@test.com",
+            password="password123",
+            email_verified=False,
+            is_active=False  # Users start inactive
+        )
+        self.uidb64 = urlsafe_base64_encode(force_bytes(self.user.pk))
+        self.token = email_verification_token.make_token(self.user)
+
+    def test_verify_email_success(self):
+        """Verify that a valid token activates the user and marks email as verified"""
+        url = reverse('verify-email', kwargs={'uidb64': self.uidb64, 'token': self.token})
+        response = self.client.get(url)
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(response.data["message"], "Email verified successfully")
+        
+        # Refresh from DB and check flags
+        self.user.refresh_from_db()
+        self.assertTrue(self.user.email_verified)
+        self.assertTrue(self.user.is_active)
+
+    def test_verify_email_invalid_token(self):
+        """Verify that a tampered token returns 400 Bad Request"""
+        invalid_token = "invalid-token-123"
+        url = reverse('verify-email', kwargs={'uidb64': self.uidb64, 'token': invalid_token})
+        response = self.client.get(url)
+
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertEqual(response.data["error"], "Invalid or expired token")
+        
+        # Flags should remain False
+        self.user.refresh_from_db()
+        self.assertFalse(self.user.email_verified)
+        self.assertFalse(self.user.is_active)
+
+    def test_verify_email_invalid_uid(self):
+        """Verify that a non-existent UID returns 400 Bad Request"""
+        bad_uid = urlsafe_base64_encode(force_bytes(99999)) # Non-existent PK
+        url = reverse('verify-email', kwargs={'uidb64': bad_uid, 'token': self.token})
+        response = self.client.get(url)
+
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertEqual(response.data["error"], "Invalid link")
