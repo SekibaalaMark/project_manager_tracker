@@ -372,3 +372,74 @@ class ResendVerificationSerializerTest(TestCase):
         
         self.assertFalse(serializer.is_valid())
         self.assertEqual(serializer.errors['non_field_errors'][0], "User with this email does not exist.")
+
+
+
+
+from django.test import TestCase
+from django.contrib.auth import get_user_model
+from django.contrib.auth.password_validation import validate_password
+from rest_framework.test import APIRequestFactory
+from .serializers import ChangePasswordSerializer
+
+User = get_user_model()
+
+class ChangePasswordSerializerTest(TestCase):
+
+    def setUp(self):
+        self.old_password = "OldSecurePassword123"
+        self.user = User.objects.create_user(
+            username="testuser",
+            password=self.old_password
+        )
+        self.factory = APIRequestFactory()
+
+    def test_change_password_success(self):
+        """Verify password update works with correct current password"""
+        request = self.factory.post('/')
+        request.user = self.user
+        
+        data = {
+            "current_password": self.old_password,
+            "new_password": "NewDifferentPassword456!",
+            "confirm_password": "NewDifferentPassword456!"
+        }
+        
+        serializer = ChangePasswordSerializer(data=data, context={'request': request})
+        self.assertTrue(serializer.is_valid())
+        user = serializer.save()
+
+        # Verify password actually changed in DB
+        self.assertTrue(user.check_password("NewDifferentPassword456!"))
+        self.assertFalse(user.check_password(self.old_password))
+
+    def test_incorrect_current_password(self):
+        """Verify validation fails if the current password is wrong"""
+        request = self.factory.post('/')
+        request.user = self.user
+        
+        data = {
+            "current_password": "WrongCurrentPassword",
+            "new_password": "NewPassword123",
+            "confirm_password": "NewPassword123"
+        }
+        
+        serializer = ChangePasswordSerializer(data=data, context={'request': request})
+        self.assertFalse(serializer.is_valid())
+        self.assertIn("current_password", serializer.errors)
+        self.assertEqual(serializer.errors["current_password"][0], "Current password is incorrect.")
+
+    def test_new_passwords_mismatch(self):
+        """Verify validation fails if confirmation doesn't match"""
+        request = self.factory.post('/')
+        request.user = self.user
+        
+        data = {
+            "current_password": self.old_password,
+            "new_password": "NewPassword123",
+            "confirm_password": "MismatchPassword456"
+        }
+        
+        serializer = ChangePasswordSerializer(data=data, context={'request': request})
+        self.assertFalse(serializer.is_valid())
+        self.assertIn("confirm_password", serializer.errors)
