@@ -4,6 +4,7 @@ from django.test import TestCase
 from django.test import TestCase
 from django.contrib.auth import get_user_model
 from organizations.models import Organization # Adjust path if needed
+from .serializers import *
 
 User = get_user_model()
 
@@ -262,3 +263,61 @@ class CreateOrganizationUserSerializerTest(TestCase):
         # Should fail validation
         self.assertFalse(serializer.is_valid())
         self.assertEqual(serializer.errors['non_field_errors'][0], "Only OWNER can create users.")
+
+
+
+
+
+
+
+class SetNewPasswordSerializerTest(TestCase):
+
+    def setUp(self):
+        self.user = User.objects.create_user(
+            username="new_staff",
+            password="temp_password123",
+            must_change_password=True
+        )
+        self.factory = APIRequestFactory()
+
+    def test_set_password_success(self):
+        """Verify password is changed and flag is cleared"""
+        request = self.factory.post('/')
+        request.user = self.user
+        
+        data = {
+            "new_password": "NewSecurePassword123",
+            "confirm_new_password": "NewSecurePassword123"
+        }
+        
+        serializer = SetNewPasswordSerializer(data=data, context={'request': request})
+        self.assertTrue(serializer.is_valid())
+        user = serializer.save()
+
+        # 1. Verify the flag is now False
+        self.assertFalse(user.must_change_password)
+        
+        # 2. Verify the new password actually works for authentication
+        from django.contrib.auth import authenticate
+        authenticated_user = authenticate(username="new_staff", password="NewSecurePassword123")
+        self.assertIsNotNone(authenticated_user)
+
+    def test_password_too_short(self):
+        """Verify the 6-character minimum length constraint"""
+        data = {"new_password": "123", "confirm_new_password": "123"}
+        serializer = SetNewPasswordSerializer(data=data)
+        
+        self.assertFalse(serializer.is_valid())
+        self.assertIn("non_field_errors", serializer.errors)
+        self.assertEqual(serializer.errors['non_field_errors'][0], "Password too short.")
+
+    def test_passwords_mismatch(self):
+        """Verify validation fails if confirm field is different"""
+        data = {
+            "new_password": "password123",
+            "confirm_new_password": "different_password"
+        }
+        serializer = SetNewPasswordSerializer(data=data)
+        
+        self.assertFalse(serializer.is_valid())
+        self.assertEqual(serializer.errors['non_field_errors'][0], "Passwords do not match.")
