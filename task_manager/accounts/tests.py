@@ -791,3 +791,69 @@ class ResendVerificationViewTests(APITestCase):
         response = self.client.post(self.url, payload, format='json')
         
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+
+
+
+
+
+from django.urls import reverse
+from rest_framework import status
+from rest_framework.test import APITestCase
+from django.contrib.auth import get_user_model
+
+User = get_user_model()
+
+class ChangePasswordViewTests(APITestCase):
+    def setUp(self):
+        self.url = reverse('change-password') # Ensure this matches your urls.py
+        self.password = "OldSecurePass123"
+        self.user = User.objects.create_user(
+            username="active_user",
+            password=self.password
+        )
+
+    def test_change_password_api_success(self):
+        """Verify 200 OK and successful DB update for authenticated user"""
+        self.client.force_authenticate(user=self.user)
+        
+        payload = {
+            "current_password": self.password,
+            "new_password": "NewStrongPass789!",
+            "confirm_password": "NewStrongPass789!"
+        }
+        
+        response = self.client.post(self.url, payload, format='json')
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(response.data["message"], "Password changed successfully.")
+        
+        # Verify the user can now authenticate with the NEW password
+        self.user.refresh_from_db()
+        self.assertTrue(self.user.check_password("NewStrongPass789!"))
+
+    def test_change_password_wrong_current(self):
+        """Verify 400 Bad Request if current password verification fails"""
+        self.client.force_authenticate(user=self.user)
+        
+        payload = {
+            "current_password": "WrongCurrentPassword",
+            "new_password": "NewStrongPass789!",
+            "confirm_password": "NewStrongPass789!"
+        }
+        
+        response = self.client.post(self.url, payload, format='json')
+        
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertIn("current_password", response.data)
+
+    def test_change_password_unauthenticated(self):
+        """Verify 401 Unauthorized for users who aren't logged in"""
+        payload = {
+            "current_password": self.password,
+            "new_password": "NewStrongPass789!",
+            "confirm_password": "NewStrongPass789!"
+        }
+        # No force_authenticate here
+        response = self.client.post(self.url, payload, format='json')
+        
+        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
