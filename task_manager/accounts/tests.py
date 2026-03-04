@@ -548,3 +548,74 @@ class RegisterViewTests(APITestCase):
         
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
         self.assertIn("username", response.data)
+
+
+
+
+
+from django.urls import reverse
+from rest_framework import status
+from rest_framework.test import APITestCase
+from django.contrib.auth import get_user_model
+from organizations.models import Organization
+
+User = get_user_model()
+
+class LoginViewTests(APITestCase):
+    def setUp(self):
+        self.url = reverse('login')
+        self.org = Organization.objects.create(name="Alpha Corp", slug="alpha-corp")
+        self.password = "SecurePass123"
+        self.user = User.objects.create_user(
+            username="test_login_user",
+            email="login@test.com",
+            password=self.password,
+            organization=self.org,
+            role="MEMBER",
+            email_verified=True, # Required by your serializer logic
+            must_change_password=False
+        )
+
+    def test_login_api_success(self):
+        """Verify 200 OK and JWT token presence in response"""
+        payload = {
+            "username": "test_login_user",
+            "password": self.password
+        }
+        response = self.client.post(self.url, payload, format='json')
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        
+        # Check for JWT tokens
+        self.assertIn("access", response.data)
+        self.assertIn("refresh", response.data)
+        
+        # Check for metadata
+        self.assertEqual(response.data["role"], "MEMBER")
+        self.assertEqual(response.data["organization"], "Alpha Corp")
+        self.assertFalse(response.data["must_change_password"])
+
+    def test_login_api_failure(self):
+        """Verify 400 Bad Request on invalid credentials"""
+        payload = {
+            "username": "test_login_user",
+            "password": "wrongpassword"
+        }
+        response = self.client.post(self.url, payload, format='json')
+        
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        # Ensure tokens are NOT present in a failed login
+        self.assertNotIn("access", response.data)
+
+    def test_login_api_unverified_owner(self):
+        """Verify API blocks unverified owners specifically"""
+        User.objects.create_user(
+            username="unverified_owner",
+            password=self.password,
+            role="OWNER",
+            email_verified=False
+        )
+        payload = {"username": "unverified_owner", "password": self.password}
+        
+        response = self.client.post(self.url, payload, format='json')
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
