@@ -619,3 +619,63 @@ class LoginViewTests(APITestCase):
         
         response = self.client.post(self.url, payload, format='json')
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+
+
+class CreateOrganizationUserViewTests(APITestCase):
+    def setUp(self):
+        self.url = reverse('create-org-user') # Adjust name to match your urls.py
+        self.org = Organization.objects.create(name="Tech Corp", slug="tech-corp")
+        
+        # Create an OWNER to perform the action
+        self.owner = User.objects.create_user(
+            username="owner_mark", 
+            email="owner@tech.com",
+            password="password123",
+            role="OWNER",
+            organization=self.org
+        )
+        
+        # Create a MEMBER to test permission denial
+        self.member = User.objects.create_user(
+            username="member_joe", 
+            role="MEMBER",
+            organization=self.org
+        )
+
+    @patch('accounts.serializers.send_temporary_password_email')
+    def test_view_create_user_success(self, mock_email):
+        """Test that an authenticated OWNER can create a user via API"""
+        self.client.force_authenticate(user=self.owner)
+        
+        payload = {
+            "email": "new_manager@tech.com",
+            "username": "new_manager",
+            "role": "MANAGER"
+        }
+        
+        response = self.client.post(self.url, payload, format='json')
+
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+        self.assertEqual(response.data["message"], "User created successfully")
+        self.assertEqual(response.data["role"], "MANAGER")
+        
+        # Verify DB creation
+        self.assertTrue(User.objects.filter(username="new_manager").exists())
+
+    def test_view_create_user_forbidden_for_member(self):
+        """Test that a MEMBER is blocked (Validation logic in Serializer)"""
+        self.client.force_authenticate(user=self.member)
+        
+        payload = {"email": "test@tech.com", "username": "test", "role": "MEMBER"}
+        response = self.client.post(self.url, payload, format='json')
+        
+        # This will return 400 because your serializer raises a ValidationError
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertIn("non_field_errors", response.data)
+
+    def test_view_create_user_unauthenticated(self):
+        """Test that unauthenticated requests are blocked by Permission Class"""
+        payload = {"email": "test@tech.com", "username": "test", "role": "MEMBER"}
+        response = self.client.post(self.url, payload, format='json')
+        
+        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
