@@ -857,3 +857,58 @@ class ChangePasswordViewTests(APITestCase):
         response = self.client.post(self.url, payload, format='json')
         
         self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
+
+
+
+
+
+
+from django.urls import reverse
+from rest_framework import status
+from rest_framework.test import APITestCase
+from django.contrib.auth import get_user_model
+from unittest.mock import patch
+
+User = get_user_model()
+
+class ForgotPasswordViewTests(APITestCase):
+    def setUp(self):
+        self.url = reverse('forgot-password') # Match your urls.py name
+        self.user = User.objects.create_user(
+            username="forgetful_user",
+            email="lost@example.com",
+            password="OriginalPassword123",
+            must_change_password=False
+        )
+
+    @patch('accounts.serializers.send_temporary_password_email')
+    def test_forgot_password_api_success(self, mock_email):
+        """Verify 200 OK and user state change upon valid email submission"""
+        payload = {"email": "lost@example.com"}
+        response = self.client.post(self.url, payload, format='json')
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(response.data["message"], "Temporary password sent to email.")
+        
+        # Verify database updates
+        self.user.refresh_from_db()
+        self.assertTrue(self.user.must_change_password)
+        self.assertFalse(self.user.check_password("OriginalPassword123"))
+        
+        # Verify email dispatch
+        mock_email.assert_called_once()
+
+    def test_forgot_password_invalid_email(self):
+        """Verify 400 Bad Request for unregistered email"""
+        payload = {"email": "unknown@example.com"}
+        response = self.client.post(self.url, payload, format='json')
+        
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertIn("email", response.data)
+
+    def test_forgot_password_malformed_email(self):
+        """Verify 400 Bad Request for incorrect email format"""
+        payload = {"email": "not-an-email"}
+        response = self.client.post(self.url, payload, format='json')
+        
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
