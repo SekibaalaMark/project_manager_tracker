@@ -489,3 +489,62 @@ class ForgotPasswordSerializerTest(TestCase):
         self.assertFalse(serializer.is_valid())
         self.assertIn("email", serializer.errors)
         self.assertEqual(serializer.errors["email"][0], "No user found with this email.")
+
+
+
+
+
+from django.urls import reverse
+from rest_framework import status
+from rest_framework.test import APITestCase
+from organizations.models import *
+
+
+
+class RegisterViewTests(APITestCase):
+    def setUp(self):
+        self.url = reverse('register') # Ensure this matches the name in your urls.py
+        self.valid_payload = {
+            "username": "founder_mark",
+            "email": "mark@startup.com",
+            "password": "SecurePassword123",
+            "password_confirmation": "SecurePassword123",
+            "organization_name": "Mark Ventures"
+        }
+
+    @patch('accounts.serializers.send_verification_email')
+    def test_register_user_success(self, mock_email):
+        """Test successful registration via the API endpoint"""
+        response = self.client.post(self.url, self.valid_payload, format='json')
+
+        # Check status code
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+        
+        # Check response message
+        self.assertEqual(response.data["message"], "User registered successfully")
+        
+        # Verify database changes
+        self.assertTrue(User.objects.filter(username="founder_mark").exists())
+        self.assertTrue(Organization.objects.filter(name="Mark Ventures").exists())
+
+    def test_register_invalid_data(self):
+        """Test that invalid data returns 400 Bad Request"""
+        invalid_payload = self.valid_payload.copy()
+        invalid_payload['password_confirmation'] = "Mismatch"
+        
+        response = self.client.post(self.url, invalid_payload, format='json')
+        
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        # Verify no user was created
+        self.assertFalse(User.objects.filter(username="founder_mark").exists())
+
+    @patch('accounts.serializers.send_verification_email')
+    def test_register_duplicate_username(self, mock_email):
+        """Test that registering an existing username fails"""
+        # Create user first
+        User.objects.create_user(username="founder_mark", email="other@test.com", password="password")
+        
+        response = self.client.post(self.url, self.valid_payload, format='json')
+        
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertIn("username", response.data)
