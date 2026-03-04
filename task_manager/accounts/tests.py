@@ -195,3 +195,70 @@ class LoginSerializerTest(TestCase):
         
         self.assertFalse(serializer.is_valid())
         self.assertEqual(serializer.errors['non_field_errors'][0], "Please verify your email first.")
+
+
+
+
+
+from django.test import TestCase
+from django.contrib.auth import get_user_model
+from unittest.mock import patch
+from rest_framework.test import APIRequestFactory
+from organizations.models import Organization
+from .serializers import CreateOrganizationUserSerializer
+
+User = get_user_model()
+
+class CreateOrganizationUserSerializerTest(TestCase):
+
+    def setUp(self):
+        self.org = Organization.objects.create(name="Tech Corp", slug="tech-corp")
+        self.owner = User.objects.create_user(
+            username="owner_mark", 
+            role="OWNER", 
+            organization=self.org
+        )
+        self.member = User.objects.create_user(
+            username="member_joe", 
+            role="MEMBER", 
+            organization=self.org
+        )
+        self.factory = APIRequestFactory()
+
+    @patch('accounts.serializers.send_temporary_password_email')
+    def test_create_user_success_by_owner(self, mock_email):
+        """Verify OWNER can create a user within their own organization"""
+        request = self.factory.post('/')
+        request.user = self.owner # Set request user as OWNER
+        
+        data = {
+            "email": "new_staff@tech.com",
+            "username": "new_staff",
+            "role": "MANAGER"
+        }
+        
+        serializer = CreateOrganizationUserSerializer(data=data, context={'request': request})
+        self.assertTrue(serializer.is_valid())
+        new_user = serializer.save()
+
+        # Check user details
+        self.assertEqual(new_user.organization, self.org)
+        self.assertEqual(new_user.role, "MANAGER")
+        self.assertTrue(new_user.must_change_password)
+        
+        # Verify email with temp password was triggered
+        mock_email.assert_called_once()
+        # Verify the password passed to email is an 8-character string
+        self.assertEqual(len(mock_email.call_args[0][1]), 8)
+
+    def test_create_user_forbidden_for_member(self):
+        """Verify non-OWNERs are blocked from creating users"""
+        request = self.factory.post('/')
+        request.user = self.member # Set request user as MEMBER
+        
+        data = {"email": "test@test.com", "username": "test", "role": "MEMBER"}
+        serializer = CreateOrganizationUserSerializer(data=data, context={'request': request})
+        
+        # Should fail validation
+        self.assertFalse(serializer.is_valid())
+        self.assertEqual(serializer.errors['non_field_errors'][0], "Only OWNER can create users.")
