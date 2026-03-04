@@ -443,3 +443,49 @@ class ChangePasswordSerializerTest(TestCase):
         serializer = ChangePasswordSerializer(data=data, context={'request': request})
         self.assertFalse(serializer.is_valid())
         self.assertIn("confirm_password", serializer.errors)
+
+
+
+
+
+class ForgotPasswordSerializerTest(TestCase):
+
+    def setUp(self):
+        self.user = User.objects.create_user(
+            username="forgetful_user",
+            email="lost@example.com",
+            password="OldPassword123",
+            must_change_password=False
+        )
+
+    @patch('accounts.serializers.send_temporary_password_email')
+    def test_forgot_password_success(self, mock_email):
+        """Verify password reset generates new password and sets flag"""
+        data = {"email": "lost@example.com"}
+        serializer = ForgotPasswordSerializer(data=data)
+        
+        self.assertTrue(serializer.is_valid())
+        user = serializer.save()
+
+        # 1. Verify the 'must_change_password' flag is now True
+        self.assertTrue(user.must_change_password)
+        
+        # 2. Verify the old password no longer works
+        self.assertFalse(user.check_password("OldPassword123"))
+        
+        # 3. Verify email was sent with an 8-character string
+        mock_email.assert_called_once()
+        temp_pass = mock_email.call_args[0][1]
+        self.assertEqual(len(temp_pass), 8)
+        
+        # 4. Verify the new temp password actually works
+        self.assertTrue(user.check_password(temp_pass))
+
+    def test_forgot_password_email_not_found(self):
+        """Verify validation error when email doesn't exist"""
+        data = {"email": "unknown@example.com"}
+        serializer = ForgotPasswordSerializer(data=data)
+        
+        self.assertFalse(serializer.is_valid())
+        self.assertIn("email", serializer.errors)
+        self.assertEqual(serializer.errors["email"][0], "No user found with this email.")
