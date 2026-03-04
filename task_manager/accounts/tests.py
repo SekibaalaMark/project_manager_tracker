@@ -321,3 +321,54 @@ class SetNewPasswordSerializerTest(TestCase):
         
         self.assertFalse(serializer.is_valid())
         self.assertEqual(serializer.errors['non_field_errors'][0], "Passwords do not match.")
+
+
+
+
+
+
+from unittest.mock import patch
+from rest_framework.test import APIRequestFactory
+
+class ResendVerificationSerializerTest(TestCase):
+
+    def setUp(self):
+        self.user = User.objects.create_user(
+            username="unverified_user",
+            email="test@example.com",
+            password="password123",
+            email_verified=False
+        )
+        self.factory = APIRequestFactory()
+        self.request = self.factory.post('/')
+
+    @patch('accounts.serializers.send_verification_email')
+    def test_resend_success(self, mock_email):
+        """Verify email is resent to an unverified user"""
+        data = {"email": "test@example.com"}
+        serializer = ResendVerificationSerializer(data=data, context={'request': self.request})
+        
+        self.assertTrue(serializer.is_valid())
+        serializer.save()
+        
+        # Check that the email function was called once
+        mock_email.assert_called_once_with(self.request, self.user)
+
+    def test_resend_already_verified(self):
+        """Verify error if user is already verified"""
+        self.user.email_verified = True
+        self.user.save()
+        
+        data = {"email": "test@example.com"}
+        serializer = ResendVerificationSerializer(data=data)
+        
+        self.assertFalse(serializer.is_valid())
+        self.assertEqual(serializer.errors['non_field_errors'][0], "Email is already verified.")
+
+    def test_resend_user_not_found(self):
+        """Verify error if email doesn't exist in system"""
+        data = {"email": "nonexistent@example.com"}
+        serializer = ResendVerificationSerializer(data=data)
+        
+        self.assertFalse(serializer.is_valid())
+        self.assertEqual(serializer.errors['non_field_errors'][0], "User with this email does not exist.")
