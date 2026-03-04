@@ -739,3 +739,55 @@ class VerifyEmailViewTests(APITestCase):
 
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
         self.assertEqual(response.data["error"], "Invalid link")
+
+
+
+
+from django.urls import reverse
+from rest_framework import status
+from rest_framework.test import APITestCase
+from django.contrib.auth import get_user_model
+from unittest.mock import patch
+
+User = get_user_model()
+
+class ResendVerificationViewTests(APITestCase):
+    def setUp(self):
+        self.url = reverse('resend-verification') # Ensure this matches your urls.py
+        self.user = User.objects.create_user(
+            username="unverified_user",
+            email="pending@test.com",
+            password="password123",
+            email_verified=False
+        )
+
+    @patch('accounts.serializers.send_verification_email')
+    def test_resend_email_api_success(self, mock_email):
+        """Verify 200 OK and email trigger for unverified user"""
+        payload = {"email": "pending@test.com"}
+        response = self.client.post(self.url, payload, format='json')
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(response.data["message"], "Verification email sent successfully.")
+        
+        # Ensure the underlying email utility was actually called
+        mock_email.assert_called_once()
+
+    def test_resend_email_already_verified(self):
+        """Verify 400 Bad Request if user is already verified"""
+        self.user.email_verified = True
+        self.user.save()
+        
+        payload = {"email": "pending@test.com"}
+        response = self.client.post(self.url, payload, format='json')
+        
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        # Check that DRF returns the serializer error message
+        self.assertIn("non_field_errors", response.data)
+
+    def test_resend_email_nonexistent_user(self):
+        """Verify 400 Bad Request for an unknown email"""
+        payload = {"email": "ghost@test.com"}
+        response = self.client.post(self.url, payload, format='json')
+        
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
